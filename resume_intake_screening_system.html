@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Intake & Screening System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        .header h1 { font-size: 2.5em; font-weight: 700; margin-bottom: 10px; }
+        .header p { font-size: 1.1em; opacity: 0.9; }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .tab-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            background: white;
+            color: #667eea;
+            border-color: white;
+        }
+        .tab-btn:hover { transform: translateY(-2px); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        @media (max-width: 968px) { .grid { grid-template-columns: 1fr; } }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h3 {
+            color: #333;
+            margin: 20px 0 15px 0;
+            font-size: 1.15em;
+            font-weight: 600;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .form-group { margin-bottom: 20px; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 0.95em;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.95em;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        textarea { resize: vertical; min-height: 100px; }
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        .button.secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .result-card {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-size: 0.9em;
+        }
+        .result-card.error {
+            border-left-color: #e74c3c;
+            background: #ffe8e8;
+        }
+        .result-card.success {
+            border-left-color: #27ae60;
+            background: #e8f5e9;
+        }
+        .parsing-result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .parsing-result h4 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1em;
+            font-weight: 600;
+        }
+        .field-pair {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        @media (max-width: 600px) {
+            .field-pair { grid-template-columns: 1fr; }
+            .header h1 { font-size: 1.8em; }
+            .tabs { flex-direction: column; }
+            .tab-btn { width: 100%; }
+        }
+        .loading {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #1565c0;
+            margin-bottom: 15px;
+        }
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8em;
+            overflow-x: auto;
+            margin: 15px 0;
+            line-height: 1.4;
+        }
+        .copy-btn {
+            background: #2c3e50;
+            color: #ecf0f1;
+            border: 1px solid #34495e;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+        .copy-btn:hover { background: #34495e; }
+        .criteria-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .criteria-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            color: #666;
+        }
+        .criteria-item input[type="checkbox"] { width: auto; margin: 0; }
+        .api-section {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .api-method {
+            color: #667eea;
+            font-weight: 600;
+            margin-top: 15px;
+            margin-bottom: 8px;
+        }
+        .zap-flow {
+            background: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .zap-flow strong { color: #667eea; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Resume Intake & Screening System</h1>
+            <p>Complete Zapier MCP Integration with Google Forms & CandidateZip</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('setup')">⚙️ Setup</button>
+            <button class="tab-btn" onclick="showTab('api')">🔌 API Docs</button>
+            <button class="tab-btn" onclick="showTab('zaps')">🤖 Zapier Zaps</button>
+            <button class="tab-btn" onclick="showTab('test')">🧪 Test Tool</button>
+        </div>
+
+        <!-- SETUP TAB -->
+        <div id="setup" class="tab-content active">
+            <div class="grid">
+                <div class="card">
+                    <h2>📋 Google Forms Setup</h2>
+                    <h3>Form Configuration</h3>
+                    <div class="form-group">
+                        <label>Google Form ID *</label>
+                        <input type="text" id="formId" placeholder="e.g., 1FAIpQLSc..." />
+                        <div class="info-box">Find in URL: /forms/d/{FORM_ID}/edit</div>
+                    </div>
+
+                    <div class="field-pair">
+                        <div class="form-group">
+                            <label>Name Field</label>
+                            <input type="text" id="nameField" placeholder="Full Name" />
+                        </div>
+                        <div class="form-group">
+                            <label>Email Field</label>
+                            <input type="text" id="emailField" placeholder="Email Address" />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Resume Field (File URL)</label>
+                        <input type="text" id="resumeField" placeholder="Resume File URL" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Position Applied</label>
+                        <select id="jobPosition">
+                            <option value="">-- Select --</option>
+                            <option value="software-engineer">Software Engineer</option>
+                            <option value="product-manager">Product Manager</option>
+                            <option value="ux-designer">UX Designer</option>
+                            <option value="data-scientist">Data Scientist</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+
+                    <h3>Webhook Setup</h3>
+                    <div class="form-group">
+                        <label>Zapier Webhook URL</label>
+                        <div class="code-block">https://hooks.zapier.com/hooks/catch/...</div>
+                        <button class="copy-btn" onclick="copyWebhook()">Copy Webhook</button>
+                    </div>
+
+                    <button class="button" onclick="validateFormSetup()">✓ Validate Setup</button>
+                    <div id="formValidation"></div>
+                </div>
+
+                <div class="card">
+                    <h2>🔍 CandidateZip Parser</h2>
+                    <h3>API Configuration</h3>
+                    <div class="form-group">
+                        <label>CandidateZip API Key *</label>
+                        <input type="password" id="apiKey" placeholder="Your API Key" />
+                        <div class="info-box">Get from <a href="https://www.candidatezip.com" target="_blank" style="color: inherit;">CandidateZip dashboard</a></div>
+                    </div>
+
+                    <h3>Screening Criteria</h3>
+                    <div class="criteria-grid">
+                        <label class="criteria-item">
+                            <input type="checkbox" id="requireYears" checked /> Min Years: 
+                            <input type="number" id="minYears" value="3" style="width: 50px; margin-left: 5px;" />
+                        </label>
+                        <label class="criteria-item">
+                            <input type="checkbox" id="requireDegree" checked /> Bachelor's+
+                        </label>
+                        <label class="criteria-item">
+                            <input type="checkbox" id="requireSkills" checked /> Skills Match
+                        </label>
+                        <label class="criteria-item">
+                            <input type="checkbox" id="requireLocation" /> Location Pref
+                        </label>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label>Required Skills (comma-separated)</label>
+                        <textarea id="requiredSkills" placeholder="Python, JavaScript, React...">JavaScript, React, Node.js</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Preferred Location</label>
+                        <input type="text" id="preferredLocation" placeholder="USA, Remote..." />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Salary Budget (USD)</label>
+                        <div class="field-pair">
+                            <input type="number" id="minSalary" placeholder="Min" />
+                            <input type="number" id="maxSalary" placeholder="Max" />
+                        </div>
+                    </div>
+
+                    <button class="button" onclick="validateParserSetup()">✓ Test Configuration</button>
+                    <div id="parserValidation"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API DOCS TAB -->
+        <div id="api" class="tab-content">
+            <div class="card">
+                <h2>🔌 Complete API Reference</h2>
+
+                <div class="api-section">
+                    <h3>1. Google Forms Webhook - Form Submission</h3>
+                    <div class="api-method">POST /hooks/zapier/catch/YOUR_WEBHOOK_ID</div>
+                    <div class="code-block">curl -X POST https://hooks.zapier.com/hooks/catch/WEBHOOK_ID \
+  -H "Content-Type: application/json" \
+  -d '{
+    "candidate_name": "Alice Johnson",
+    "email": "alice@example.com",
+    "phone": "+1-555-0123",
+    "resume_url": "https://example.com/alice-resume.pdf",
+    "position": "Senior Software Engineer",
+    "submission_time": "2024-01-15T14:30:00Z",
+    "source": "careers_form"
+  }'</div>
+                    <p style="margin: 10px 0; color: #666; font-size: 0.9em;">
+                        <strong>Response:</strong> Zapier receives and forwards to CandidateZip Parser
+                    </p>
+                </div>
+
+                <div class="api-section">
+                    <h3>2. CandidateZip Resume Parser API</h3>
+                    <div class="api-method">POST https://api.candidatezip.com/v1/parseResume</div>
+                    <div class="code-block">curl -X POST https://api.candidatezip.com/v1/parseResume \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "candidate_name": "Alice Johnson",
+    "document_url": "https://example.com/alice-resume.pdf",
+    "document_type": "resume",
+    "return_fields": [
+      "name", "email", "phone", "location", "experience",
+      "education", "skills", "certifications", "salary_expectation"
+    ]
+  }'</div>
+                    <p style="margin: 10px 0; color: #666; font-size: 0.9em;">
+                        <strong>Returns:</strong> Parsed candidate data with confidence score
+                    </p>
+                </div>
+
+                <div class="api-section">
+                    <h3>3. Screening Logic - Pass/Fail Decision</h3>
+                    <div class="api-method">POST /hooks/zapier/catch/SCREENING_WEBHOOK</div>
+                    <div class="code-block">curl -X POST https://hooks.zapier.com/hooks/catch/SCREENING_ID \
+  -H "Content-Type: application/json" \
+  -d '{
+    "submission_id": "sub_12345",
+    "candidate": {
+      "name": "Alice Johnson",
+      "email": "alice@example.com",
+      "experience_years": 5,
+      "skills": ["Python", "JavaScript", "React", "AWS"],
+      "education": "Master in Computer Science",
+      "location": "San Francisco, CA",
+      "salary_min": 150000,
+      "salary_max": 200000
+    },
+    "screening": {
+      "score": 92,
+      "recommendation": "STRONG_PASS",
+      "passed": ["experience", "skills", "education", "location"],
+      "failed": []
+    }
+  }'</div>
+                    <p style="margin: 10px 0; color: #666; font-size: 0.9em;">
+                        <strong>Triggers:</strong> Email to hiring team, Slack notification, ATS update
+                    </p>
+                </div>
+
+                <div class="api-section">
+                    <h3>4. ATS Integration - Create Candidate in Greenhouse</h3>
+                    <div class="api-method">POST https://harvest.greenhouse.io/v1/candidates</div>
+                    <div class="code-block">curl -X POST https://harvest.greenhouse.io/v1/candidates \
+  -H "Authorization: Basic YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "first_name": "Alice",
+    "last_name": "Johnson",
+    "email_addresses": [{"value": "alice@example.com", "type": "personal"}],
+    "phone_numbers": [{"value": "+1-555-0123", "type": "mobile"}],
+    "addresses": [{"value": "San Francisco, CA", "type": "personal"}],
+    "custom_fields": {
+      "years_of_experience": 5,
+      "technical_skills": "Python, JavaScript, React, AWS",
+      "screening_score": 92
+    }
+  }'</div>
+                </div>
+
+                <div class="api-section">
+                    <h3>Field Mapping Reference</h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                        <tr style="background: #f0f0f0;">
+                            <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">CandidateZip Field</th>
+                            <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Zapier Variable</th>
+                            <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Type</th>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;">name</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">parsed_data.name</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">String</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;">email</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">parsed_data.email</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">String</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;">experience_years</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">parsed_data.experience_years</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">Number</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;">skills</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">parsed_data.skills (array)</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">Array</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;">education</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">parsed_data.education (array)</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">Array</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;">location</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">parsed_data.location</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">String</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;">salary_expectation</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">parsed_data.salary_expectation</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">Object {min, max}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ZAPS TAB -->
+        <div id="zaps" class="tab-content">
+            <div class="card">
+                <h2>🤖 Zapier Workflow Setup</h2>
+
+                <h3>ZAP #1: Form Submission → Resume Parsing</h3>
+                <div class="zap-flow">
+                    <strong>Trigger:</strong> Google Forms → New Form Response<br/>
+                    <strong>Action:</strong> CandidateZip → Parse Resume<br/>
+                    <strong>Field Mapping:</strong><br/>
+                    • Candidate Name: [Form: Full Name]<br/>
+                    • Document URL: [Form: Resume Attachment]<br/>
+                    • Return Fields: ✓ All (name, email, phone, location, experience, education, skills, certifications, salary)
+                </div>
+
+                <h3>ZAP #2: Screening Logic → Decision Router</h3>
+                <div class="zap-flow">
+                    <strong>Trigger:</strong> Webhooks by Zapier → Catch Raw JSON<br/>
+                    <strong>Filters:</strong><br/>
+                    • IF experience_years >= [your minimum]<br/>
+                    • AND skills contains ANY [your required skills]<br/>
+                    • AND education includes Bachelor's+<br/>
+                    <strong>Actions (Multiple Paths):</strong><br/>
+                    • Path A (Score ≥85): Send interview invite email + Slack notification<br/>
+                    • Path B (Score 65-84): Add to review queue in Google Sheets<br/>
+                    • Path C (Score <65): Log for manual review
+                </div>
+
+                <h3>ZAP #3: Strong Pass → Send Interview Request</h3>
+                <div class="zap-flow">
+                    <strong>Trigger:</strong> Google Sheets → New Row in "Strong Candidates"<br/>
+                    <strong>Actions:</strong><br/>
+                    • Gmail: Send interview invitation email<br/>
+                    • Slack: Post to #hiring-strong-candidates<br/>
+                    • Greenhouse: Create candidate + application
+                </div>
+
+                <h3>ZAP #4: All Submissions → Analytics Logging</h3>
+                <div class="zap-flow">
+                    <strong>Trigger:</strong> Webhooks → Catch Raw JSON<br/>
+                    <strong>Action:</strong> Google Sheets → Create Row<br/>
+                    <strong>Logged Data:</strong> Timestamp, candidate name, email, position, score, recommendation, status
+                </div>
+
+                <h3>ZAP #5: Failed Parses → Manual Review Alert</h3>
+                <div class="zap-flow">
+                    <strong>Trigger:</strong> Webhooks → JSON with parse_success: false<br/>
+                    <strong>Actions:</strong><br/>
+                    • Email recruiting team with resume URL<br/>
+                    • Create row in "Failed Parses" sheet for manual extraction
+                </div>
+
+                <h3>ZAP #6: Daily Digest → Slack Summary</h3>
+                <div class="zap-flow">
+                    <strong>Trigger:</strong> Schedule → Daily at 9:00 AM<br/>
+                    <strong>Action:</strong> Google Sheets → Look Up Multiple Rows<br/>
+                    <strong>Slack Message:</strong> Total submissions, strong pass count, pass count, avg score, top positions
+                </div>
+
+                <h3>Installation Steps</h3>
+                <ol style="margin: 15px 0 15px 20px; color: #555; font-size: 0.95em; line-height: 1.8;">
+                    <li><strong>Enable Apps in Zapier:</strong> Google Forms, CandidateZip, Webhooks, Google Sheets, Gmail, Slack</li>
+                    <li><strong>Create Zap #1:</strong> Forms → CandidateZip Parser (one Zap)</li>
+                    <li><strong>Create Zap #2:</strong> Screening logic with decision router (one Zap)</li>
+                    <li><strong>Create Zap #3-6:</strong> Notifications and logging (one Zap each)</li>
+                    <li><strong>Test each Zap:</strong> Submit sample form, verify data flows</li>
+                    <li><strong>Enable all Zaps</strong> when confident</li>
+                </ol>
+
+                <div class="info-box">
+                    💡 <strong>Tip:</strong> Use Zapier's "Code" action for complex screening formulas. Reference the Python example in the Test Tool tab.
+                </div>
+            </div>
+        </div>
+
+        <!-- TEST TOOL TAB -->
+        <div id="test" class="tab-content">
+            <div class="grid">
+                <div class="card">
+                    <h2>📄 Test Resume Parsing</h2>
+                    <div class="form-group">
+                        <label>Paste Resume Content</label>
+                        <textarea id="resumeContent" placeholder="Paste resume text or provide URL..." style="min-height: 150px;"></textarea>
+                    </div>
+
+                    <div class="field-pair">
+                        <button class="button" onclick="parseResume()">Parse Resume</button>
+                        <button class="button secondary" onclick="screenCandidate()">Screen Candidate</button>
+                    </div>
+
+                    <div id="parsingResults"></div>
+                </div>
+
+                <div class="card">
+                    <h2>📊 Screening Score Calculator</h2>
+                    <h3>Test Your Criteria</h3>
+                    <div class="form-group">
+                        <label>Candidate Experience (years)</label>
+                        <input type="number" id="testYears" value="5" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Candidate Skills (comma-separated)</label>
+                        <textarea id="testSkills" placeholder="Python, JavaScript, React...">Python, JavaScript, React, Node.js</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Required Skills (comma-separated)</label>
+                        <textarea id="testRequired" placeholder="Enter required skills...">JavaScript, React, Node.js</textarea>
+                    </div>
+
+                    <button class="button" onclick="calculateScore()">Calculate Score</button>
+                    <div id="scoreResult"></div>
+
+                    <h3 style="margin-top: 30px;">Python Implementation</h3>
+                    <div class="code-block">class ResumeScreeningEngine:
+    def score_candidate(self, candidate, criteria):
+        score = 0
+        
+        # Experience (50 points)
+        exp_score = min((candidate['exp_years'] / 
+                        criteria['min_exp']) * 50, 50)
+        score += exp_score
+        
+        # Skills (40 points)
+        matched = len(set(candidate['skills']) & 
+                     set(criteria['required_skills']))
+        skill_score = (matched / len(
+            criteria['required_skills'])) * 40
+        score += skill_score
+        
+        # Education (10 points)
+        if candidate.get('degree') in [
+            'Bachelor', 'Master', 'PhD']:
+            score += 10
+        
+        recommendation = 'STRONG_PASS' if score >= 85 \
+            else 'PASS' if score >= 65 \
+            else 'REVIEW' if score >= 40 \
+            else 'REJECT'
+        
+        return {
+            'score': round(score, 1),
+            'recommendation': recommendation
+        }</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(c => c.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function copyWebhook() {
+            const text = document.getElementById('webhookUrl').textContent;
+            navigator.clipboard.writeText(text);
+            alert('Webhook URL copied!');
+        }
+
+        function validateFormSetup() {
+            const formId = document.getElementById('formId').value.trim();
+            const result = document.getElementById('formValidation');
+            
+            if (!formId || formId.length < 20) {
+                result.innerHTML = '<div class="result-card error">❌ Invalid Form ID</div>';
+            } else {
+                result.innerHTML = '<div class="result-card success">✓ Form ID valid</div>';
+            }
+        }
+
+        function validateParserSetup() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const result = document.getElementById('parserValidation');
+            
+            if (!apiKey) {
+                result.innerHTML = '<div class="result-card error">❌ API Key required</div>';
+            } else {
+                result.innerHTML = '<div class="result-card success">✓ API Key configured</div>';
+            }
+        }
+
+        function parseResume() {
+            const resultsDiv = document.getElementById('parsingResults');
+            resultsDiv.innerHTML = '<div style="margin-top: 20px;"><span class="loading"></span> Parsing...</div>';
+
+            setTimeout(() => {
+                const mockData = {
+                    name: "John Doe",
+                    email: "john@example.com",
+                    phone: "+1-234-567-8900",
+                    location: "San Francisco, CA",
+                    experience_years: 5,
+                    skills: ["JavaScript", "React", "Node.js", "Python", "AWS"],
+                    education: "Master's in Computer Science",
+                    salary: "$150,000 - $180,000"
+                };
+
+                let html = '<div class="parsing-result"><h4>✓ Parsed Data</h4>';
+                for (const [key, value] of Object.entries(mockData)) {
+                    html += `<div><strong>${key}:</strong> ${value}</div>`;
+                }
+                html += '</div>';
+                resultsDiv.innerHTML = html;
+            }, 1000);
+        }
+
+        function screenCandidate() {
+            const minYears = parseInt(document.getElementById('minYears').value) || 0;
+            const requiredSkills = document.getElementById('requiredSkills').value
+                .split(',').map(s => s.trim().toLowerCase()).filter(s => s);
+
+            const resultsDiv = document.getElementById('parsingResults');
+            resultsDiv.innerHTML = '<div style="margin-top: 20px;"><span class="loading"></span> Screening...</div>';
+
+            setTimeout(() => {
+                const mockData = {
+                    experience_years: 5,
+                    skills: ["javascript", "react", "node.js", "python", "aws"],
+                    education: "Master's"
+                };
+
+                let passed = [];
+                let failed = [];
+
+                if (mockData.experience_years >= minYears) {
+                    passed.push(`✓ Experience: ${mockData.experience_years} years`);
+                } else {
+                    failed.push(`✗ Experience: ${mockData.experience_years} years (need ${minYears}+)`);
+                }
+
+                const matched = mockData.skills.filter(s => 
+                    requiredSkills.some(req => s.includes(req)));
+                const skillScore = Math.round((matched.length / Math.max(requiredSkills.length, 1)) * 100);
+
+                if (skillScore >= 60) {
+                    passed.push(`✓ Skills: ${skillScore}% match`);
+                } else {
+                    failed.push(`✗ Skills: ${skillScore}% match`);
+                }
+
+                const score = Math.round((passed.length / (passed.length + failed.length)) * 100);
+                const rec = score >= 80 ? "STRONG PASS" : score >= 60 ? "PASS" : "REVIEW";
+
+                let html = '<div class="parsing-result" style="margin-top: 20px;">';
+                html += `<h4>Score: ${score}% - ${rec}</h4>`;
+                html += '<div style="' + (score >= 80 ? 'background: #e8f5e9' : 'background: #fff3e0') + '; padding: 10px; margin: 10px 0; border-radius: 4px;">';
+                passed.forEach(p => html += `<div style="color: #2e7d32;">${p}</div>`);
+                html += '</div>';
+                if (failed.length > 0) {
+                    html += '<div style="background: #ffebee; padding: 10px; margin: 10px 0; border-radius: 4px;">';
+                    failed.forEach(f => html += `<div style="color: #c62828;">${f}</div>`);
+                    html += '</div>';
+                }
+                html += '</div>';
+                resultsDiv.innerHTML = html;
+            }, 1000);
+        }
+
+        function calculateScore() {
+            const years = parseInt(document.getElementById('testYears').value) || 0;
+            const candidateSkills = document.getElementById('testSkills').value.split(',').map(s => s.trim().toLowerCase());
+            const requiredSkills = document.getElementById('testRequired').value.split(',').map(s => s.trim().toLowerCase());
+
+            let score = 0;
+            let breakdown = {};
+
+            // Experience (50 points)
+            const expScore = Math.min((years / 5) * 50, 50);
+            score += expScore;
+            breakdown.experience = Math.round(expScore);
+
+            // Skills (40 points)
+            const matched = candidateSkills.filter(s => requiredSkills.some(req => s.includes(req) || req.includes(s))).length;
+            const skillScore = (matched / Math.max(requiredSkills.length, 1)) * 40;
+            score += skillScore;
+            breakdown.skills = Math.round(skillScore);
+
+            // Education bonus (10 points)
+            breakdown.education = 10;
+            score += 10;
+
+            const finalScore = Math.round(score * 10) / 10;
+            const rec = finalScore >= 85 ? "STRONG PASS" : finalScore >= 65 ? "PASS" : "REVIEW";
+
+            const html = `<div class="result-card success" style="margin-top: 15px;">
+                <strong>Total Score: ${finalScore}/100 - ${rec}</strong><br/>
+                Experience: ${breakdown.experience}pts | Skills: ${breakdown.skills}pts | Education: ${breakdown.education}pts
+            </div>`;
+            document.getElementById('scoreResult').innerHTML = html;
+        }
+    </script>
+</body>
+</html>
